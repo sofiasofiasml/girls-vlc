@@ -280,7 +280,8 @@ var LOGIC = {
                 //Quitar img/ ... .png
                 if(imageEvent.indexOf("img/")!=-1)
                     imageEvent = imageEvent.substring(4, imageEvent.length-4);
-        
+                if(imageEvent =="pp")
+                    imageEvent=""; 
                 DateInitEvent =  new Date(CORE.DicEvents[i].date); 
                 DateFinishEvent = new Date(CORE.DicEvents[i].dateFin); 
                 HourEvent = CORE.DicEvents[i].hour; 
@@ -288,12 +289,13 @@ var LOGIC = {
                 break; 
             }
         }
-        var StringCopyPortapapeles= "*"+TitleEvent+"* \nFecha: "+ DateInitEvent.toLocaleDateString("es-ES")+ "-"+ DateFinishEvent.toLocaleDateString("es-ES") +" Hora: "+ HourEvent+ "\n"+ ContentEvent +"\n"+ imageEvent; 
+        var StringCopyPortapapeles= "*"+TitleEvent+"* \nFecha: "+ LOGIC.WhatDayWeekIs(DateInitEvent)+" "+ DateInitEvent.toLocaleDateString("es-ES")+ "- "+ LOGIC.WhatDayWeekIs(DateFinishEvent)+" "+DateFinishEvent.toLocaleDateString("es-ES") +" Hora: "+ HourEvent+ "\n"+ ContentEvent +"\n"+ imageEvent;
         var div = document.createElement("div");
         StringCopyPortapapeles = LOGIC.URLify(StringCopyPortapapeles); 
         div.innerHTML = StringCopyPortapapeles;
         StringCopyPortapapeles = div.textContent || div.innerText || "";
-        StringCopyPortapapeles += "\nPara más información entra en la web: https://girls-bcn.web.app/ "; 
+        StringCopyPortapapeles += "\nPara más información entra en la web: https://girls-vlc.web.app/ "; 
+        StringCopyPortapapeles = StringCopyPortapapeles.replace("...", "");
 
         const el = document.createElement('textarea');
         el.value = StringCopyPortapapeles;	//str is your string to copy
@@ -302,6 +304,12 @@ var LOGIC = {
         document.execCommand('copy');	// Copy command
         alert("Copiado portapapeles");
 
+    },
+    WhatDayWeekIs:function(Fecha){
+        const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+        var day = days[Fecha.getDay()];
+        return day; 
     },
     //Borrar <a href= ... </a> para http.....com
     URLify: function(string){
