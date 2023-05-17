@@ -37,7 +37,7 @@ var CORE =
     imageUploadURL: "", 
     arrayID: {}, 
     imageokupload: true, 
-    paswordEliminar:"EliminarEvento",
+    paswordEliminar:"Auto69busNaranja!",
     //calendarEvents: [], 
     calendarDiv: "", 
     init: function()
