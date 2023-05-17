@@ -200,14 +200,7 @@ var GFX =
         descriptionEvent.innerHTML =  CORE.DicEvents[indexEvent].content; 
         descriptionEvent.style.fontWeight = "900";
         
-        if(descriptionEvent.querySelectorAll("a"))
-        {
-            for(var i=0; i<descriptionEvent.querySelectorAll("a").length; i++){
-                if(descriptionEvent.querySelectorAll("a")[i].text!="LINK")
-                    descriptionEvent.querySelectorAll("a")[i].text="LINK"; 
-            }
-
-        }
+        
         var imgEvent = document.createElement("img");
         var index = CORE.DicEvents[indexEvent].image.indexOf("/img/");
         imgEvent.src = CORE.DicEvents[indexEvent].image.substring(index, CORE.DicEvents[indexEvent].image.length);
@@ -285,12 +278,7 @@ var GFX =
         sharebutton.setAttribute("name", CORE.DicEvents[indexEvent].id);
         sharebutton.setAttribute("onclick", "LOGIC.sshareEvent(this)");
 
-        var editbutton = document.createElement("button"); 
-        editbutton.setAttribute("type", "button");
-        editbutton.innerText = "Edit Evento"; 
-        editbutton.setAttribute("class", "editEvent");
-        editbutton.setAttribute("name", CORE.DicEvents[indexEvent].id);
-        editbutton.setAttribute("onclick", "LOGIC.seditEvent(this)");
+        
         
         var cont1Event = document.createElement("div"); 
         cont1Event.classList.add("content"); 
@@ -313,7 +301,6 @@ var GFX =
         cont1Event.appendChild(contEvent); 
         cont1Event.appendChild(delatebutton); 
         cont1Event.appendChild(sharebutton); 
-        // cont1Event.appendChild(editbutton);
         div1Event.appendChild(cont1Event); 
         CORE.addEvents.appendChild(div1Event); 
     }, 
