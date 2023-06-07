@@ -1,4 +1,5 @@
-//logica de la app (Controler)
+
+ //logica de la app (Controler)
 var LOGIC = {
 
     init: function()
@@ -20,9 +21,17 @@ var LOGIC = {
     {
         var valuenameEvent = document.querySelector("#nameEvent"); 
         var valueDate= document.querySelector("#dateEvent");
+        var valueDateFin= document.querySelector("#dateEventFinish");
         var valueHour= document.querySelector("#horaEvent");
-        if(valuenameEvent.value !="" && valueDate.value !="" && valueHour.value !="" && CORE.imageokupload){
+        var valueImage= document.querySelector(".imagenUpload");
+        var valueOrganizer= document.querySelector("#organizerEvent");
+        
+        
 
+        if(valueOrganizer.value!="" && valuenameEvent.value !="" && valueDate.value !="" && valueDateFin!="" && valueHour.value !="" ){
+            // if(!valueImage)
+            //     LOGIC.saveImageUpload(valueImage.value);
+            
             GFX.createDivEventos(); 
             this.saveDB(); 
             
@@ -131,22 +140,92 @@ var LOGIC = {
     },
     delateAsistant: function(event)
     {
-        if (confirm('Vas a borrar un asistente')) {
-            delateasistentEvenDB(event); 
-            document.location.reload();
+        var Posid= event.id.substring(0, event.id.indexOf("-")); 
+        var AsistentPos= event.id.substring(event.id.indexOf("-")+1); 
+        
+        for(var i=0; i< CORE.DicEvents.length; i++){
+            if(CORE.DicEvents[i].id == Posid)
+            {
+                if (confirm('Vas a borrar un asistente: '+CORE.DicEvents[i].asistentes[AsistentPos].split('/')[0])) {
+                   var entra =0; 
+                    for(let j=0; j<CORE.admins.length; j++)
+                   {
+                        
+                       if(auth.currentUser.email == LOGIC.decrypt_data(CORE.DicEvents[i].asistentes[AsistentPos].split('/')[1]) ||
+                            LOGIC.encrypt_data(auth.currentUser.email) == CORE.admins[j])
+                       {
+                           delateasistentEvenDB(event);
+                           entra = 1;  
+                           document.location.reload();
+                           
+                       }
+                    //    else
+                    //    {
+                        //    }
+                    }
+                    if(entra==0)
+                        alert("No eres el usuario que vas a borrar.");
+                }
+            }
         }
+       
     }, 
 
     delateEvent: function(event)
     {
-        let person = prompt("Contraseña para borrar:", "");
-        if (person == CORE.paswordEliminar) {
-            delateEvenDB(event); 
-            document.location.reload();
+        if(!auth.currentUser)
+        {
+            alert("Inicia Sesión"); 
+            firebase.auth().signInWithPopup(provider);
         }
+        if(auth.currentUser)
+        {
+            let person = prompt("Contraseña para borrar:", "");
+            for (var i =0; i<  CORE.admins.length; i++)
+            {
+                if (person == LOGIC.decrypt_data(CORE.paswordEliminar) ||
+                auth.currentUser.email == LOGIC.decrypt_data(CORE.admins[i]))
+                {
+                    delateEvenDB(event); 
+                    document.location.reload();
+                }
+            }
+
+        }
+        
+    },
+    seditEvent: function()
+    {
+        // let person = prompt("Contraseña para borrar:", "");
+        // if (person == CORE.paswordEliminar) {
+            var title = document.querySelector("#nameEditEvent").value; 
+            var content= CORE.editors.NewEventEditDescription.getData(); //GFX.createLeerMas(CORE.editors.NewEventEditDescription.getData(),CORE.idEdit); 
+            var date= document.querySelector("#dateEditEvent").value; 
+            var dateFin= document.querySelector("#dateEventEditFinish").value; 
+            var hour= document.querySelector("#horaEditEvent").value; 
+            var categoria= document.querySelector("#categoriaEdit").value; 
+            var organizer= document.querySelector("#organizerEditEvent").value; 
+            if(categoria=="1" || categoria=="2" || categoria=="3" ||
+            categoria=="4" || categoria=="5" || categoria=="6" || categoria=="7" ||
+            categoria=="8")
+                var image = GFX.imageForCategory(categoria); 
+            else
+            {
+                var id = CORE.idEdit;  
+    
+                for(var i=0; i< CORE.DicEvents.length; i++){
+                    if(CORE.DicEvents[i].id == id)
+                    {
+                        var image = document.querySelector(".ImageOption2 .imagenUpload").value; 
+                    }
+                }
+            }
+            editEvenDB( title, image, content,date, dateFin, hour, categoria, organizer); 
+            document.location.reload();
+           
+       // }
        
     },
-    
     // https://es.stackoverflow.com/questions/259945/ordenar-ul-javascript
     ordenarLista: function(idUl){
         //Obtenemos el elemento ul
@@ -163,71 +242,73 @@ var LOGIC = {
     },
     ordenarEventDate: function()
     {
-        var listDate = []; 
+        if(document.title=="Girls Vlc"){
+            var listDate = []; 
 
-        for (var i =0; i< CORE.DicEvents.length; i++)
-        {
-            var dateOrdnear = CORE.DicEvents[i].date; 
-            var indexBar = dateOrdnear.indexOf('-'); 
-            var year = dateOrdnear.substring(0, indexBar);
-            dateOrdnear = dateOrdnear.replace(dateOrdnear.substring(0,indexBar+1),'');
-            var indexBar = dateOrdnear.indexOf('-'); 
-            var mes = dateOrdnear.substring(0, indexBar);
-            var dia = dateOrdnear.substring(indexBar+1, dateOrdnear.length);
-            dateOrdnear = mes+'/'+dia+'/'+year; 
-
-            var time = CORE.DicEvents[i].hour;
-            var timeParts = time.split(":");
-            var milisegHour =(+timeParts[0] * (60000 * 60)) + (+timeParts[1] * 60000);
-       
-            listDate.push(Date.parse(dateOrdnear)+milisegHour); 
-        }
-        listDate = Array.from(listDate);
-        listDate.sort(); 
-
-         var listOrdenarId = []; 
-         for(var i =0; i<CORE.DicEvents.length; i++)
-         {
-            var inside = false; 
-            var dateOrdnear = CORE.DicEvents[i].date; 
-            var indexBar = dateOrdnear.indexOf('-'); 
-            var year = dateOrdnear.substring(0, indexBar);
-            dateOrdnear = dateOrdnear.replace(dateOrdnear.substring(0,indexBar+1),'');
-            var indexBar = dateOrdnear.indexOf('-'); 
-            var mes = dateOrdnear.substring(0, indexBar);
-            var dia = dateOrdnear.substring(indexBar+1, dateOrdnear.length);
-            dateOrdnear = mes+'/'+dia+'/'+year; 
-       
-            var time = CORE.DicEvents[i].hour;
-            var timeParts = time.split(":");
-            var milisegHour =(+timeParts[0] * (60000 * 60)) + (+timeParts[1] * 60000);
-            dateOrdnear = Date.parse(dateOrdnear) +milisegHour; 
-
-            for(var j =0; j<CORE.DicEvents.length; j++)
+            for (var i =0; i< CORE.DicEvents.length; i++)
             {
-                if(dateOrdnear == listDate[j] && !inside && !listOrdenarId[j])
+                var dateOrdnear = CORE.DicEvents[i].date; 
+                var indexBar = dateOrdnear.indexOf('-'); 
+                var year = dateOrdnear.substring(0, indexBar);
+                dateOrdnear = dateOrdnear.replace(dateOrdnear.substring(0,indexBar+1),'');
+                var indexBar = dateOrdnear.indexOf('-'); 
+                var mes = dateOrdnear.substring(0, indexBar);
+                var dia = dateOrdnear.substring(indexBar+1, dateOrdnear.length);
+                dateOrdnear = mes+'/'+dia+'/'+year; 
+
+                var time = CORE.DicEvents[i].hour;
+                var timeParts = time.split(":");
+                var milisegHour =(+timeParts[0] * (60000 * 60)) + (+timeParts[1] * 60000);
+        
+                listDate.push(Date.parse(dateOrdnear)+milisegHour); 
+            }
+            listDate = Array.from(listDate);
+            listDate.sort(); 
+
+            var listOrdenarId = []; 
+            for(var i =0; i<CORE.DicEvents.length; i++)
+            {
+                var inside = false; 
+                var dateOrdnear = CORE.DicEvents[i].date; 
+                var indexBar = dateOrdnear.indexOf('-'); 
+                var year = dateOrdnear.substring(0, indexBar);
+                dateOrdnear = dateOrdnear.replace(dateOrdnear.substring(0,indexBar+1),'');
+                var indexBar = dateOrdnear.indexOf('-'); 
+                var mes = dateOrdnear.substring(0, indexBar);
+                var dia = dateOrdnear.substring(indexBar+1, dateOrdnear.length);
+                dateOrdnear = mes+'/'+dia+'/'+year; 
+        
+                var time = CORE.DicEvents[i].hour;
+                var timeParts = time.split(":");
+                var milisegHour =(+timeParts[0] * (60000 * 60)) + (+timeParts[1] * 60000);
+                dateOrdnear = Date.parse(dateOrdnear) +milisegHour; 
+
+                for(var j =0; j<CORE.DicEvents.length; j++)
                 {
-                    listOrdenarId[j]= CORE.DicEvents[i].id; 
-                    inside = true; 
+                    if(dateOrdnear == listDate[j] && !inside && !listOrdenarId[j])
+                    {
+                        listOrdenarId[j]= CORE.DicEvents[i].id; 
+                        inside = true; 
+                    }
                 }
             }
-         }
 
-         var parent = document.getElementById('AddEvents');
-         parent.innerHTML = "";
-         var OrdenarDiv = []; 
-         for(var i =0; i< listOrdenarId.length; i++)
-         {
-             for(var j=0; j<CORE.DicEvents.length; j++)
-             {
-                 if(CORE.DicEvents[j].id==listOrdenarId[i]){
-                    GFX.printEvent(j); 
-                    OrdenarDiv.push(CORE.DicEvents[j]); 
+            var parent = document.getElementById('AddEvents');
+            parent.innerHTML = "";
+            var OrdenarDiv = []; 
+            for(var i =0; i< listOrdenarId.length; i++)
+            {
+                for(var j=0; j<CORE.DicEvents.length; j++)
+                {
+                    if(CORE.DicEvents[j].id==listOrdenarId[i]){
+                        GFX.printEvent(j); 
+                        OrdenarDiv.push(CORE.DicEvents[j]); 
+                    }
                 }
-             }
-         }
-         CORE.DicEvents = OrdenarDiv;
-         delatenodeDBforTime(); 
+            }
+            CORE.DicEvents = OrdenarDiv;
+            delatenodeDBforTime(); 
+        }
     }, 
     saveImageUpload:function(downloadURL)
     {
@@ -280,6 +361,9 @@ var LOGIC = {
                 //Quitar img/ ... .png
                 if(imageEvent.indexOf("img/")!=-1)
                     imageEvent = imageEvent.substring(4, imageEvent.length-4);
+                
+                if(imageEvent =="pp")
+                    imageEvent=""; 
         
                 DateInitEvent =  new Date(CORE.DicEvents[i].date); 
                 DateFinishEvent = new Date(CORE.DicEvents[i].dateFin); 
@@ -288,13 +372,18 @@ var LOGIC = {
                 break; 
             }
         }
-        var StringCopyPortapapeles= "*"+TitleEvent+"* \nFecha: "+ DateInitEvent.toLocaleDateString("es-ES")+ "-"+ DateFinishEvent.toLocaleDateString("es-ES") +" Hora: "+ HourEvent+ "\n"+ ContentEvent +"\n"+ imageEvent; 
+
+        var StringCopyPortapapeles= "*"+TitleEvent+"* \nFecha: "+ LOGIC.WhatDayWeekIs(DateInitEvent)+" "+ 
+        DateInitEvent.toLocaleDateString("es-ES")+ "- "+ LOGIC.WhatDayWeekIs(DateFinishEvent)+" "+
+        DateFinishEvent.toLocaleDateString("es-ES") +" Hora: "+ HourEvent+ "\n"+ ContentEvent +"\n"+ 
+        imageEvent+ "\nApúntate en:  https://girls-vlc.web.app/#Evento"+CORE.DicEvents[i].id; 
+
         var div = document.createElement("div");
         StringCopyPortapapeles = LOGIC.URLify(StringCopyPortapapeles); 
         div.innerHTML = StringCopyPortapapeles;
         StringCopyPortapapeles = div.textContent || div.innerText || "";
-        StringCopyPortapapeles += "\nPara más información entra en la web: https://girls-bcn.web.app/ "; 
-
+        StringCopyPortapapeles += "\nPara más información entra en la web: https://girls-vlc.web.app/ "; 
+        StringCopyPortapapeles = StringCopyPortapapeles.replace("...", "");
         const el = document.createElement('textarea');
         el.value = StringCopyPortapapeles;	//str is your string to copy
         document.body.appendChild(el);
@@ -302,6 +391,12 @@ var LOGIC = {
         document.execCommand('copy');	// Copy command
         alert("Copiado portapapeles");
 
+    },
+    WhatDayWeekIs:function(Fecha){
+        const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+        var day = days[Fecha.getDay()];
+        return day; 
     },
     //Borrar <a href= ... </a> para http.....com
     URLify: function(string){
@@ -339,6 +434,64 @@ var LOGIC = {
             }
         }
     },
+    RegisterUser: function(event)
+    {
+        event.preventDefault(); 
+    }, 
+    InitUser: function(event)
+    {
+        event.preventDefault(); 
+        const InitEmail = document.querySelector("");
+
+    }, 
+    encrypt_data:function(string) {
+        string = unescape(encodeURIComponent(string));
+        var newString = '',
+           char, nextChar, combinedCharCode;
+        for (var i = 0; i < string.length; i += 2) {
+        char = string.charCodeAt(i);
+
+      if ((i + 1) < string.length) {
+
+
+      nextChar = string.charCodeAt(i + 1) - 31;
+
+
+      combinedCharCode = char + "" + nextChar.toLocaleString('en', {
+       minimumIntegerDigits: 2
+      });
+
+      newString += String.fromCharCode(parseInt(combinedCharCode, 10));
+
+      } else {
+
+
+      newString += string.charAt(i);
+      }
+      }
+      return newString.split("").reduce((hex,c)=>hex+=c.charCodeAt(0).toString(16).padStart(4,"0"),"");
+    },
+    decrypt_data:function(string) {
+
+        var newString = '',
+        char, codeStr, firstCharCode, lastCharCode;
+        string = string.match(/.{1,4}/g).reduce((acc,char)=>acc+String.fromCharCode(parseInt(char, 16)),"");
+        for (var i = 0; i < string.length; i++) {
+        char = string.charCodeAt(i);
+        if (char > 132) {
+        codeStr = char.toString(10);
+  
+        firstCharCode = parseInt(codeStr.substring(0, codeStr.length - 2), 10);
+  
+        lastCharCode = parseInt(codeStr.substring(codeStr.length - 2, codeStr.length), 10) + 31;
+  
+        newString += String.fromCharCode(firstCharCode) + String.fromCharCode(lastCharCode);
+        } else {
+        newString += string.charAt(i);
+        }
+        }
+        return newString;
+    },  
     // cambiarIDIfRepite: function()
     // {
         

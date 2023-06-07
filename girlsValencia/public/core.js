@@ -1,24 +1,10 @@
-//Todo accesible global, todo lo importante de la app (MODEL)
-ClassicEditor
-    .create( document.querySelector( '#NewEventDescription' ), {
-        toolbar: [ ],
-        
-        link: {
-            defaultProtocol: 'http://'
-            
-        }
-    } )
-.then(  )
-.catch( error =>{console.error(error)
-} );
-
-
-
 var CORE = 
 {
     //state of app
     initDB: true, 
     initDBVot: true, 
+    initDBPass: true,
+    initDBAdmin: true, 
     server: null, 
     canvas: null, 
     modules: [],
@@ -37,9 +23,13 @@ var CORE =
     imageUploadURL: "", 
     arrayID: {}, 
     imageokupload: true, 
-    paswordEliminar:"Auto69busNaranja!",
-    //calendarEvents: [], 
+    paswordEliminar: "",
+    idEdit: -1, 
+    editors : {},
+    des_Horosc: "", 
+    calendarEvents: [], 
     calendarDiv: "", 
+    admins: [],
     init: function()
     {
         this.last_time = performance.now(); 
@@ -51,6 +41,7 @@ var CORE =
         WORLD.init(); 
         LOGIC.init(); 
         //bind events
+        
         document.body.addEventListener("keydown", this.onKey.bind(this)); 
         document.body.addEventListener("keyup", this.onKey.bind(this)); 
         document.body.addEventListener("mousedown", this.onMouse.bind(this)); 
@@ -60,12 +51,34 @@ var CORE =
         this.nameNewEvent = document.querySelector("input#nameUser"); 
         this.addEvents = document.querySelector("#AddEvents"); 
         this.navUl = document.querySelector("nav ul"); 
-        //this.loop();
-        this.draw(); 
-        GFX.printOut("NOVEDAD: VÍDEO Y PODCASTS EN LA SECCIÓN REVISTA ");
-        
-    }, 
+        CORE.ReadJson("./des_Horoscopo.json"); 
 
+        // this.draw(); 
+        //CKeditor
+         if(document.title=="Girls Vlc"){
+            CORE.createEditor( 'NewEventDescription' );
+            CORE.createEditor( 'NewEventEditDescription' );
+     }
+    }, 
+    ReadJson: function(fichero)
+    {
+        fetch(fichero)
+        .then(response => {
+        return response.json();
+        })
+        .then(data =>  CORE.des_Horosc= data);
+
+       
+    },
+    // ChangeTitile: function()
+    // {
+    //      //Title Horoscopo
+    //      let mesActual = new Intl.DateTimeFormat('es-ES', { month: 'long'}).format(new Date());
+
+    //      var horoscopoTitiel = document.getElementById("horoscopo"); 
+ 
+    //      horoscopoTitiel.innerHTML= "Horóscopo: "+mesActual.charAt(0).toUpperCase() + mesActual.slice(1); 
+    // },
     onKey:  function(event)
     {
         //process key 
@@ -84,6 +97,19 @@ var CORE =
         }
 
     }, 
+    createEditor:function( elementId ) { 
+        return ClassicEditor 
+        .create( document.getElementById( elementId ), {
+                    toolbar: [ ],
+                    
+                    link: {
+                        defaultProtocol: 'http://'
+                        
+                    }
+                } ) 
+        .then( editor => { CORE.editors[ elementId ] = editor; } ) 
+        .catch( err => console.error( err.stack ) );
+    },
 
     onMouse: function(e)
     {
@@ -117,23 +143,23 @@ var CORE =
 
     // },
 
-    draw: function()
-    {
-        for(var i =0; i< this.modules.length; i++)
-        {
-            var modules = this.modules[i]; 
-            if (modules.draw)
-                modules.draw(); 
-        }
-    }, 
-    update: function(dt)
-    {
-        for(var i =0; i< this.modules.length; i++)
-        {
-            var modules = this.modules[i]; 
-            if (modules.update)
-                modules.update(dt); 
-        }
-    }
+    // draw: function()
+    // {
+    //     for(var i =0; i< this.modules.length; i++)
+    //     {
+    //         var modules = this.modules[i]; 
+    //         if (modules.draw)
+    //             modules.draw(); 
+    //     }
+    // }, 
+    // update: function(dt)
+    // {
+    //     for(var i =0; i< this.modules.length; i++)
+    //     {
+    //         var modules = this.modules[i]; 
+    //         if (modules.update)
+    //             modules.update(dt); 
+    //     }
+    // }
     
 }

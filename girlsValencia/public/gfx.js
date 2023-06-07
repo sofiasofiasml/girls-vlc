@@ -17,6 +17,14 @@ var GFX =
         document.getElementById("popup-AddEvent").classList.toggle("active"); 
         window.scrollTo(0,1);
     },
+    toggleEditPopup: function(event)
+    {
+        if(event)
+            CORE.idEdit = event.name; 
+        document.getElementById("popup-EditEvent").classList.toggle("active"); 
+        window.scrollTo(0,1);
+        GFX.FillInfo(); 
+    },
     downbotom: function()
     {
         window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
@@ -29,6 +37,53 @@ var GFX =
     {
         document.getElementById("popup-Votacion").classList.toggle("active"); 
         LOGIC.InfoVotationElement(element); 
+    }, 
+    togglePopupHoroscopo: function(val)
+    {
+        window.scrollTo(0,1);
+        document.getElementById("popup-Horoscopo").classList.toggle("active"); 
+        if(val){
+            document.getElementById("Value-Horoscopo").innerHTML =val;
+            switch (val) {
+                case "Aries":
+                  document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Aries; 
+                  break;
+                case "Tauro":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Tauro; 
+                  break;
+                case "géminis":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Geminis; 
+                  break;
+                case "cáncer":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Cancer; 
+                    break;
+                case "leo":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Leo; 
+                    break;
+                case "virgo":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Virgo; 
+                    break;
+                case "libra":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Libra; 
+                    break;
+                case "escorpio":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Escorpio; 
+                    break;
+                case "sagitario":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Sagitario; 
+                    break;
+                case "capricornio":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Capricornio; 
+                    break;
+                case "acuario":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Acuario; 
+                    break;
+                case "piscis":
+                    document.getElementById("Explication_Horoscopo").innerHTML = CORE.des_Horosc.Piscis; 
+                    break;
+              }
+        }
+        
     }, 
     togglePopupShareAgenda: function()
     {
@@ -52,33 +107,106 @@ var GFX =
         divOverlay.appendChild(inputdiv); 
 
     },
+    FillInfo: function()
+    {
+        var id = CORE.idEdit;  
+        for(var i=0; i< CORE.DicEvents.length; i++){
+            if(CORE.DicEvents[i].id == id)
+            {
+                document.querySelector("#nameEditEvent").value = CORE.DicEvents[i].title; 
+                document.querySelector("#dateEditEvent").value = CORE.DicEvents[i].date; 
+                document.querySelector("#dateEventEditFinish").value = CORE.DicEvents[i].dateFin; 
+                document.querySelector("#horaEditEvent").value = CORE.DicEvents[i].hour; 
+                document.querySelector("#categoriaEdit").value = CORE.DicEvents[i].categoria; 
+                document.querySelector("#organizerEditEvent").value = CORE.DicEvents[i].organizer; 
+                if(document.querySelector("#categoriaEdit").value=="SubirImagen")
+                    GFX.selection2Value(document.querySelector("#categoriaEdit")); 
+                if(document.querySelector(".ImageOption2 .imagenUpload"))
+                    document.querySelector(".ImageOption2 .imagenUpload").value = CORE.DicEvents[i].image; 
+                CORE.editors.NewEventEditDescription.setData(CORE.DicEvents[i].content); 
+                CORE.editors.NewEventEditDescription.setData(CORE.editors.NewEventEditDescription.getData().replace("...", ""));
+                break;
+            }
+        }
+    },
     addlistnav:function()
     {
-        var divnav = document.querySelector("#ulnav"); 
-        var liEvent = document.createElement("li"); 
-        var aEvent = document.createElement("a"); 
-        aEvent.setAttribute("onclick", "GFX.togglePopupVotacion(this)");
-        aEvent.classList.add("votacion");
-        var leng =CORE.Votation.length-1;  
-        aEvent.id = "votacion"+leng;
-        aEvent.innerText = CORE.Votation[CORE.Votation.length-1].name.charAt(0).toUpperCase() +CORE.Votation[CORE.Votation.length-1].name.slice(1); 
-        liEvent.appendChild(aEvent); 
-        divnav.appendChild(liEvent); 
+        if(document.title=="Girls Vlc"){
+            var divnav = document.querySelector("#ulnav"); 
+            var liEvent = document.createElement("li"); 
+            var aEvent = document.createElement("a"); 
+            aEvent.setAttribute("onclick", "GFX.togglePopupVotacion(this)");
+            aEvent.classList.add("votacion");
+            var leng =CORE.Votation.length-1;  
+            aEvent.id = "votacion"+leng;
+            aEvent.innerText = CORE.Votation[CORE.Votation.length-1].name.charAt(0).toUpperCase() +CORE.Votation[CORE.Votation.length-1].name.slice(1); 
+            liEvent.appendChild(aEvent); 
+            divnav.appendChild(liEvent); 
+        }
     },
     addEventDB:function()
     {
         seeData("Eventos"); 
         seeData("Votation"); 
+        seeData("PassWord"); 
+        seeData("Admin"); 
     },
     addAsistent:function(event)
     {
-        var value = document.querySelector('#Asistencia'+event.name).value; 
-        writeNewPost(event.name, 'asistentes', value) 
-        this.seeAsistentes(event, value); 
-        document.querySelector('#Asistencia'+event.name).value = ""; 
-        var el = document.querySelector('#Evento'+event.name);
-        el.remove(); // Removes the div with the 'div-02' id
-        document.location.reload();
+        if(!auth.currentUser)
+        {
+            alert("Inicia Sesión"); 
+            firebase.auth().signInWithPopup(provider);
+        }
+        else
+        {
+            var evalurarEmailExistente =0; 
+            for(var i=0; i< CORE.DicEvents.length; i++){
+                if(CORE.DicEvents[i].id == event.name)
+                {
+                    for(var j=0; j< CORE.DicEvents[i].asistentes.length; j++){
+                        if( auth.currentUser.email == LOGIC.decrypt_data(CORE.DicEvents[i].asistentes[j].split('/')[1]))
+                        evalurarEmailExistente =1; 
+                    }
+                }
+
+            }
+            if(evalurarEmailExistente == 0)
+            {
+                var value = document.querySelector('#Asistencia'+event.name).value; 
+                if(value!="")
+                {
+                    writeNewPost(event.name, 'asistentes', value) 
+                    this.seeAsistentes(event,  value); 
+                    // document.querySelector('#Asistencia'+event.name).value = ""; 
+                    var el = document.querySelector('#Evento'+event.name);
+                    el.remove(); // Removes the div with the 'div-02' id
+                    document.location.reload();
+                }
+                else
+                    alert("Introduce nombre"); 
+            }
+            else{
+                alert("Ya estas apuntado en el evento"); 
+            }
+        }
+
+    },
+    displayButtonRegisterGoogle: function()
+    {
+        const signInWithGoogleButton = document.getElementById('signInWithGoogle');
+        const signOutWithGoogleButton = document.getElementById('singout');
+
+        signInWithGoogleButton.style.display = "";
+        signOutWithGoogleButton.style.display = "none";
+    },
+    displayButtonSalirGoogle: function()
+    {
+        const signInWithGoogleButton = document.getElementById('signInWithGoogle');
+        const signOutWithGoogleButton = document.getElementById('singout');
+
+        signInWithGoogleButton.style.display = "none";
+        signOutWithGoogleButton.style.display = "";
     },
     seeAsistentes:function(event, value)
     {
@@ -96,7 +224,8 @@ var GFX =
         var valueDate= document.querySelector("#dateEvent");
         var valueDateFin= document.querySelector("#dateEventFinish");
         var valueHour= document.querySelector("#horaEvent");
-        
+        var valueorganizerEvent = document.querySelector("#organizerEvent"); 
+
         var select = document.getElementById('categoria');
         var valueCategoria = select.options[select.selectedIndex].value;
         var categoria = valueCategoria; 
@@ -104,22 +233,20 @@ var GFX =
         
         var descriptionEvent = document.createElement("div");
         descriptionEvent.classList.add("description-event");
-        var proba= document.querySelectorAll(".ck.ck-editor__main p");
+        // var proba= document.querySelectorAll(".ck.ck-editor__main p");
+        descriptionEvent.innerHTML  = CORE.editors.NewEventDescription.getData();
          
-        for (var i =0; i<proba.length; i++){
-            descriptionEvent.innerHTML += proba[i].innerHTML + "<br>" ; 
-        }
+        // for (var i =0; i<proba.length; i++){
+        //     descriptionEvent.innerHTML += proba[i].innerHTML + "<br>" ; 
+        // }
         
         
-
-
-        var infoProcess = document.querySelector("#UploadImageProcess"); 
+        var valueImage= document.querySelector(".imagenUpload");
         if(CORE.imageUploadURL==""){
-            var image = 'img/pp.png'; 
-            if(infoProcess){
-                if(infoProcess.innerText == 'Imagen Subida')
-                    var image = CORE.imageUploadURL; 
-            }
+            var image = 'img/les.webp'; 
+            if(categoria == 'SubirImagen')
+                var image =valueImage.value; 
+            
         }
         else
             var image = CORE.imageUploadURL; 
@@ -128,7 +255,7 @@ var GFX =
 
         if(id!=0)
         {
-            for(var i =1; i<(Math.max(...Object.values(CORE.arrayID))+1); i++)
+            for(var i =1; i<(Math.max(...Object.values(CORE.arrayID))+2); i++)
             {
                 if(!CORE.arrayID[i]){
                     id = i; 
@@ -136,50 +263,67 @@ var GFX =
                 }
             }
         }
-        var initDescription = descriptionEvent.innerHTML.substring(0, 120);
-        initDescription += "<span id='dots"+id+"'>...</span><span id='more"+id+"' style='display: none'>"
-        var finDescription = descriptionEvent.innerHTML.substring(120, descriptionEvent.length);
-        finDescription = finDescription +"</span>"; 
-        initDescription = initDescription + finDescription; 
+        // var initDescription = descriptionEvent.innerHTML.substring(0, 120);
+        // initDescription += "<span id='dots"+id+"'>...</span><span id='more"+id+"' style='display: none'>"
+        // var finDescription = descriptionEvent.innerHTML.substring(120, descriptionEvent.length);
+        // finDescription = finDescription +"</span>"; 
+        // initDescription = GFX.createLeerMas(descriptionEvent.innerHTML, id); 
+        initDescription =  descriptionEvent.innerHTML; 
         
 
         if(!image || image =="")
-            var image = 'img/pp.png'; 
-        var newEve = new News(id, valuenameEvent.value, image, initDescription, valueDate.value, valueDateFin.value, valueHour.value, categoria, "", [], []); 
+            var image = 'img/les.webp'; 
+        var newEve = new News(id, valuenameEvent.value, image, initDescription, valueDate.value, valueDateFin.value, valueHour.value, categoria, "", [], valueorganizerEvent.value); 
         CORE.DicEvents[CORE.DicEvents.length]=newEve; 
         //var newEvenCalendar = new EventCalendar(valuenameEvent.value, valueDate.value, valueDate.value, ""); 
        // CORE.calendarEvents[CORE.calendarEvents.length]=newEvenCalendar;
     }, 
-    createDivEventosDB: function(title, id, date,dateFin, hour, image, categoria, content, asistentes, key, asistenteskey)
+    createLeerMas: function(event, id){
+        var initDescription = event.substring(0, 120);
+        initDescription += "<span id='dots"+id+"'>...</span><span id='more"+id+"' style='display: none'>"
+        var finDescription = event.substring(120, event.length);
+        finDescription = finDescription +"</span>"; 
+        initDescription = initDescription + finDescription; 
+        return initDescription; 
+    },
+    createDivEventosDB: function(title, id, date,dateFin, hour, image, categoria, content, asistentes, key, asistenteskey, organizer)
     {
+        if(document.title=="Girls Vlc"){
+            var valueDate= date;
+            var valueDateFin= dateFin;
+            var valueHour= hour;
+            
+            var imgEvent; 
+            var index = image.indexOf("/img/");
+            imgEvent = image.substring(index, image.length);
+            
+            if(CORE.initDB){
+                for(let i=0; i<asistentes.length; i++)
+                {
+                    asistentes[i]= asistentes[i].split('/')[0]+'/'+LOGIC.encrypt_data(asistentes[i].split('/')[1]);
+                }
+                var newEve = new News(id, title, imgEvent, content, valueDate,valueDateFin, valueHour, categoria, asistentes, key, organizer); 
+                if(asistentes){
+                    newEve.asistentes = asistentes; 
+                    newEve.asistenteskey = asistenteskey; 
+                }
+                CORE.DicEvents[CORE.DicEvents.length]=newEve; 
+                //var newEvenCalendar = new EventCalendar(title, valueDate, valueDate, ""); 
+                //CORE.calendarEvents[CORE.calendarEvents.length]=newEvenCalendar;
+                if(calendarDiv){
+                    calendarDiv.addEvent({
+                        title: title,
+                        start: valueDate+"T"+valueHour,
+                        end: valueDateFin+"T"+valueHour, 
+                        url: ""
+                    });
 
-        var valueDate= date;
-        var valueDateFin= dateFin;
-        var valueHour= hour;
-        
-        var imgEvent; 
-        var index = image.indexOf("/img/");
-        imgEvent = image.substring(index, image.length);
-        
-        if(CORE.initDB){
-            var newEve = new News(id, title, imgEvent, content, valueDate,valueDateFin, valueHour, categoria, asistentes, key, asistentes, asistenteskey); 
-            if(asistentes){
-                newEve.asistentes = asistentes; 
-                newEve.asistenteskey = asistenteskey; 
+                }
+                //calendarDiv.addEvent(CORE.calendarEvents[CORE.calendarEvents.length]);  
             }
-            CORE.DicEvents[CORE.DicEvents.length]=newEve; 
-            //var newEvenCalendar = new EventCalendar(title, valueDate, valueDate, ""); 
-            //CORE.calendarEvents[CORE.calendarEvents.length]=newEvenCalendar;
-            calendarDiv.addEvent({
-                title: title,
-                start: valueDate+"T"+valueHour,
-                end: valueDateFin+"T"+valueHour, 
-                url: ""
-              });
-            //calendarDiv.addEvent(CORE.calendarEvents[CORE.calendarEvents.length]);  
+            CORE.DicEvents[CORE.DicEvents.length-1].key =key; 
+            CORE.arrayID[id] = id; 
         }
-        CORE.DicEvents[CORE.DicEvents.length-1].key =key; 
-        CORE.arrayID[id] = id; 
         
     },
     printEvent: function(indexEvent)
@@ -189,16 +333,29 @@ var GFX =
         var valueDate= CORE.DicEvents[indexEvent].date;
         var valueDateFin= CORE.DicEvents[indexEvent].dateFin;
         var valueHour= CORE.DicEvents[indexEvent].hour;
+        var valueOrganizer= CORE.DicEvents[indexEvent].organizer;
         var titleUpdate = CORE.DicEvents[indexEvent].title.charAt(0).toUpperCase() +CORE.DicEvents[indexEvent].title.slice(1);
         var mydate = new Date(valueDate); 
         var mydateFin = new Date(valueDateFin); 
-       
-        nameEvent.innerText = titleUpdate + " Fecha: "+  mydate.toLocaleDateString("es-ES") +"-"+ mydateFin.toLocaleDateString("es-ES")+" Hora: "+valueHour; 
+        var dias=["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
+
+        
+        nameEvent.innerText = titleUpdate + " Fecha: "+dias[mydate.getUTCDay()]+ " "+  mydate.toLocaleDateString("es-ES") +" - "+ dias[mydateFin.getUTCDay()] +" "+ mydateFin.toLocaleDateString("es-ES")+" Hora: "+valueHour+ " Organizador: "+ valueOrganizer; 
         
         var descriptionEvent = document.createElement("div");
         descriptionEvent.classList.add("description-event");
         descriptionEvent.innerHTML =  CORE.DicEvents[indexEvent].content; 
-        descriptionEvent.style.fontWeight = "900";
+        descriptionEvent.style.fontWeight = "200";
+        descriptionEvent.style.display = "none";
+        //Poner LINK en los links
+        if(descriptionEvent.querySelectorAll("a"))
+        {
+            for(var i=0; i<descriptionEvent.querySelectorAll("a").length; i++){
+                if(descriptionEvent.querySelectorAll("a")[i].text!="LINK")
+                    descriptionEvent.querySelectorAll("a")[i].text="LINK"; 
+            }
+            
+        }
         
         
         var imgEvent = document.createElement("img");
@@ -211,25 +368,37 @@ var GFX =
         
         var AsistenciaEvent = document.createElement("input"); 
         var AsisDescEvent = document.createElement("label"); 
-        AsisDescEvent.innerText= "\nApuntarse:"; 
-        AsisDescEvent.style.fontWeight = "900";
+        AsisDescEvent.innerText= "\n"; 
+        AsisDescEvent.style.fontWeight = "200";
         
         AsistenciaEvent.id="Asistencia"+CORE.DicEvents[indexEvent].id; 
         AsistenciaEvent.setAttribute("class", "AsistenciaInput");
-        
+        AsistenciaEvent.setAttribute("placeholder", "Nombre");
+
         
         var bSubmit = document.createElement("input"); 
         bSubmit.setAttribute("type", "submit");
         bSubmit.setAttribute("class", "submitAsistencia");
         bSubmit.setAttribute("name", CORE.DicEvents[indexEvent].id);
+        bSubmit.value = "Apuntarse"; 
+        bSubmit.style.fontWeight = "200";
         bSubmit.setAttribute("onclick", "GFX.addAsistent(this)");
+
+        var bInfo = document.createElement("input"); 
+        bInfo.setAttribute("type", "submit");
+        bInfo.setAttribute("class", "bInfo");
+        bInfo.setAttribute("name", CORE.DicEvents[indexEvent].id);
+        bInfo.value = "Más información"; 
+        bInfo.style.fontWeight = "200";
+        bInfo.setAttribute("onclick", "GFX.seeInfo(this)");
+
         var ulEvent = document.createElement("ul");
         ulEvent.setAttribute("id", "ul"+CORE.DicEvents[indexEvent].id);
         if(CORE.DicEvents[indexEvent].asistentes){
             for (var i = 0; i<CORE.DicEvents[indexEvent].asistentes.length; i++){
                 var liEvent = document.createElement("li"); 
-                    liEvent.innerText = CORE.DicEvents[indexEvent].asistentes[i].charAt(0).toUpperCase() + CORE.DicEvents[indexEvent].asistentes[i].slice(1); 
-                    liEvent.style.fontWeight = "900";
+                    liEvent.innerText = CORE.DicEvents[indexEvent].asistentes[i].split('/')[0].charAt(0).toUpperCase() + CORE.DicEvents[indexEvent].asistentes[i].split('/')[0].slice(1); 
+                    liEvent.style.fontWeight = "200";
                     liEvent.setAttribute("class", "li"+CORE.DicEvents[indexEvent].id+"-"+i);
 
                 var delateli = document.createElement("div");
@@ -251,11 +420,11 @@ var GFX =
             contEvent.classList.add("ContadorAsistentes"+CORE.DicEvents[indexEvent].id);
             if(CORE.DicEvents[indexEvent].asistentes){
                 contEvent.innerText = "Asistentes: "+CORE.DicEvents[indexEvent].asistentes.length; 
-                contEvent.style.fontWeight = "900";
+                contEvent.style.fontWeight = "200";
             }
             else{
                 contEvent.innerText = "Asistentes: 0"; 
-            contEvent.style.fontWeight = "900";
+            contEvent.style.fontWeight = "200";
         }
 
         var ReadMore = document.createElement("a"); 
@@ -278,7 +447,12 @@ var GFX =
         sharebutton.setAttribute("name", CORE.DicEvents[indexEvent].id);
         sharebutton.setAttribute("onclick", "LOGIC.sshareEvent(this)");
 
-        
+        var editbutton = document.createElement("button"); 
+        editbutton.setAttribute("type", "button");
+        editbutton.innerText = "Edit Evento"; 
+        editbutton.setAttribute("class", "editEvent");
+        editbutton.setAttribute("name", CORE.DicEvents[indexEvent].id);
+        editbutton.setAttribute("onclick", "GFX.toggleEditPopup(this)");
         
         var cont1Event = document.createElement("div"); 
         cont1Event.classList.add("content"); 
@@ -290,20 +464,37 @@ var GFX =
         this.colorBackgroundEvent( CORE.DicEvents[indexEvent].categoria, div1Event); 
         
         
-        descriptionEvent.appendChild(imgEvent); 
+        cont1Event.appendChild(imgEvent); 
         cont1Event.appendChild(nameEvent); 
         cont1Event.appendChild(descriptionEvent); 
-        cont1Event.appendChild(ReadMore); 
-        cont1Event.appendChild(AsisDescEvent); 
         cont1Event.appendChild(AsistenciaEvent); 
+        cont1Event.appendChild(AsisDescEvent); 
+        cont1Event.appendChild(bInfo); 
         cont1Event.appendChild(bSubmit); 
         cont1Event.appendChild(ulEvent); 
         cont1Event.appendChild(contEvent); 
         cont1Event.appendChild(delatebutton); 
         cont1Event.appendChild(sharebutton); 
+        cont1Event.appendChild(editbutton); 
         div1Event.appendChild(cont1Event); 
         CORE.addEvents.appendChild(div1Event); 
     }, 
+    seeInfo: function(event)
+    {
+        var divE = document.querySelector("#Evento"+event.name+" .description-event"); 
+        
+        var Info = document.querySelector("#Evento"+event.name+" .bInfo"); 
+        if(divE.style.display === "none")
+        {
+            divE.style.display ="block"; 
+            Info.value ="Menos información"; 
+        }
+        else{
+            divE.style.display = "none"; 
+            Info.value ="Más información"; 
+
+        }
+    },
     ShowAgenda: function(msg)
     {
         var divShareAgenda = document.querySelector("#shareAgenda"); 
@@ -323,31 +514,31 @@ var GFX =
     {
         switch (category) {
             case "1": // Senderismo
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #a4cd88 50%, #c3deb1 50.1%);");
+                div1Event.setAttribute("style", "background:#228B22;");
               break;
             case "2": // Girls-vlc
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #c495e2 50%, #d9b8ec 50.1%);");
+                div1Event.setAttribute("style", "background:#9400D3;");
               break;
             case "3": // Fiesta/Bar --
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #fff8cd 50%, #fffade 50.1%)");
+                div1Event.setAttribute("style", "background:#2916F5;");
               break;
             case "4": // Cultura ---
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #f6bbcb 50%, #f9d2dd 50.1%);");
+                div1Event.setAttribute("style", "background:#F88017;");
               break;
             case "5": // Gastronomía ---
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #efab48 50%, #f4c887 50.1%);");
+                div1Event.setAttribute("style", "background:#7D0552;");
               break;
             case "6": // Deporte --
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #aed6e3 50%, #cae4ec 50.1%);");
+                div1Event.setAttribute("style", "background:#488AC7;");
               break;
             case "7": // Cine --
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #e24756 50%, #ec8790 50.1%);");
+                div1Event.setAttribute("style", "background:#A70D2A;");
                 break;
             case "8": // Juegos ---
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #e1f9f8 50%, #f7fdfd 50.1%);");
+                div1Event.setAttribute("style", "background:#FDD017;");
               break;
             default: // Subir imagen 
-                div1Event.setAttribute("style", "background:linear-gradient(to right bottom, #c495e2 50%, #d9b8ec 50.1%);");
+                div1Event.setAttribute("style", "background:#2916F5;");
           }
           
     },
@@ -405,66 +596,124 @@ var GFX =
         imageShowDOM.src = URL.createObjectURL(event.target.files[0]);
     }, 
     //Opciones de categoria e imagen 
-    selectionValue: function(selection)
+    selection2Value: function(selection)
     {
         if (selection.value == "SubirImagen") {
-           
             var inputImage = document.createElement("input");
-            inputImage.setAttribute("type","file");
-            inputImage.setAttribute("id", "imagenUpload");
+            inputImage.setAttribute("type","url");
+            inputImage.setAttribute("class", "imagenUpload");
+            inputImage.setAttribute("pattern", "https://.*");
+            inputImage.setAttribute("placeholder", "https://imagen.png");
             inputImage.setAttribute("name", "imagen");
-            inputImage.setAttribute("accept", "image/png, image/jpeg, image/jpg");
-            inputImage.setAttribute("onchange", "GFX.loadFile(event)");
-
             var labelimage = document.createElement("label");
-            labelimage.innerText= "Imagen:"; 
-            labelimage.appendChild(inputImage); 
-            labelimage.appendChild(inputImage); 
+            labelimage.innerText= "Link imagen:"; 
+            labelimage.setAttribute("class", "imagenUploadLabel");
 
-            var buttonImage = document.createElement("button");
-            buttonImage.setAttribute("onclick", "UploadImage()");
-            buttonImage.innerText= "Subir Imagen"; 
+            labelimage.appendChild(inputImage); 
+            //var imageDiv = document.querySelector(".ImageOption"); 
+            var imageDiv2 = document.querySelector(".ImageOption2"); 
             
-            var infoProcess = document.createElement("div");
-            infoProcess.setAttribute("id", "UploadImageProcess");
-            infoProcess.innerText= "No subida la imagen"
-            
-            var imageshow = document.createElement("img");
-            imageshow.setAttribute("id", "ShowImageUpload");
-            imageshow.setAttribute("style", "width: 50%; height: 50%; margin-left: 25%;");
-
-            var imageDiv = document.querySelector("#ImageOption"); 
-            imageDiv.appendChild(labelimage); 
-            imageDiv.appendChild(buttonImage); 
-            imageDiv.appendChild(imageshow); 
-            imageDiv.appendChild(infoProcess); 
-              
+           
+            imageDiv2.appendChild(labelimage);
+            for(var i=0; i< CORE.DicEvents.length; i++){
+                if(CORE.DicEvents[i].id == CORE.idEdit)
+                {
+                    if(document.querySelector(".ImageOption2 .imagenUpload"))
+                        document.querySelector(".ImageOption2 .imagenUpload").value = CORE.DicEvents[i].image;
+                }
+            }
+            // if(imageDiv2)
+            //     imageDiv2.appendChild(labelimage);
         }
         else{
-            var imageDiv = document.querySelector("#ImageOption"); 
+            var imageDiv = document.querySelector(".ImageOption2"); 
             while (imageDiv.firstChild)
                 imageDiv.removeChild(imageDiv.lastChild);
+            GFX.imageForCategory(selection.value); 
             
-            if(selection.value == "1") //Senderismo ----------------
-                CORE.imageUploadURL = 'img/naturaleza.png'; 
-            if(selection.value == "2") //girls-vlc
-                CORE.imageUploadURL = ""; 
-            if(selection.value == "3") //Bar FIESTA ---------------------
-                CORE.imageUploadURL = 'img/fiesta.png'; 
-            if(selection.value == "4") //Cultura --------
-                CORE.imageUploadURL = 'img/cultura.png'; 
-            if(selection.value == "5") //Gastronomia ---------------
-                CORE.imageUploadURL = 'img/comida.png'; 
-            if(selection.value == "6") //Deporte ------------------
-                CORE.imageUploadURL = 'img/deporte.png'; 
-            if(selection.value == "7") //Cine  ------------------------
-                CORE.imageUploadURL = 'img/cinemas.png'; 
-            if(selection.value == "8") //Juegos --------------------
-                CORE.imageUploadURL = 'img/juego.png'; 
+        }
+    },
+    selectionValue: function(selection)
+    {
+        // if (selection.value == "SubirImagen") {
+           
+        //     var inputImage = document.createElement("input");
+        //     inputImage.setAttribute("type","file");
+        //     inputImage.setAttribute("id", "imagenUpload");
+        //     inputImage.setAttribute("name", "imagen");
+        //     inputImage.setAttribute("accept", "image/png, image/jpeg, image/jpg");
+        //     inputImage.setAttribute("onchange", "GFX.loadFile(event)");
+
+        //     var labelimage = document.createElement("label");
+        //     labelimage.innerText= "Imagen:"; 
+        //     labelimage.appendChild(inputImage); 
+        //     labelimage.appendChild(inputImage); 
+
+        //     var buttonImage = document.createElement("button");
+        //     buttonImage.setAttribute("onclick", "UploadImage()");
+        //     buttonImage.innerText= "Subir Imagen"; 
+            
+        //     var infoProcess = document.createElement("div");
+        //     infoProcess.setAttribute("id", "UploadImageProcess");
+        //     infoProcess.innerText= "No subida la imagen"
+            
+        //     var imageshow = document.createElement("img");
+        //     imageshow.setAttribute("id", "ShowImageUpload");
+        //     imageshow.setAttribute("style", "width: 50%; height: 50%; margin-left: 25%;");
+
+        //     var imageDiv = document.querySelector("#ImageOption"); 
+        //     imageDiv.appendChild(labelimage); 
+        //     imageDiv.appendChild(buttonImage); 
+        //     imageDiv.appendChild(imageshow); 
+        //     imageDiv.appendChild(infoProcess); 
+              
+        // }
+        if (selection.value == "SubirImagen") {
+            var inputImage = document.createElement("input");
+            inputImage.setAttribute("type","url");
+            inputImage.setAttribute("class", "imagenUpload");
+            inputImage.setAttribute("pattern", "https://.*");
+            inputImage.setAttribute("placeholder", "https://imagen.png");
+            inputImage.setAttribute("name", "imagen");
+            var labelimage = document.createElement("label");
+            labelimage.innerText= "Link imagen:"; 
+            labelimage.setAttribute("class", "imagenUploadLabel");
+
+            labelimage.appendChild(inputImage); 
+            var imageDiv = document.querySelector(".ImageOption"); 
+            imageDiv.appendChild(labelimage);
+            // if(imageDiv2)
+            //     imageDiv2.appendChild(labelimage);
+        }
+        else{
+            var imageDiv = document.querySelector(".ImageOption"); 
+            while (imageDiv.firstChild)
+                imageDiv.removeChild(imageDiv.lastChild);
+            GFX.imageForCategory(selection.value); 
+            
         }
             
     }, 
-    
+    imageForCategory:function(selection)
+    {
+        if(selection == "1") //Senderismo ----------------
+                CORE.imageUploadURL = 'img/naturaleza.png'; 
+            if(selection == "2") //girls-bcn
+                CORE.imageUploadURL = ""; 
+            if(selection == "3") //Bar FIESTA ---------------------
+                CORE.imageUploadURL = 'img/fiesta.png'; 
+            if(selection == "4") //Cultura --------
+                CORE.imageUploadURL = 'img/cultura.png'; 
+            if(selection == "5") //Gastronomia ---------------
+                CORE.imageUploadURL = 'img/comida.png'; 
+            if(selection == "6") //Deporte ------------------
+                CORE.imageUploadURL = 'img/deporte.png'; 
+            if(selection == "7") //Cine  ------------------------
+                CORE.imageUploadURL = 'img/cinemas.png'; 
+            if(selection == "8") //Juegos --------------------
+                CORE.imageUploadURL = 'img/juego.png'; 
+            return CORE.imageUploadURL; 
+    },
     //Click calendar hidden events
     hiddenEvents: function(dateclick)
     {

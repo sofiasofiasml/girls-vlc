@@ -6,9 +6,10 @@
 
  // Your web app's Firebase configuration
  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+//  let prueba = 'https://nominatim.openstreetmap.org/reverse?lat=41.63125237270472&lon=-4.742565007934635&format=json';
 
- 
- const firebaseConfig = {
+
+const firebaseConfig = {
     apiKey: "AIzaSyB21jheU29VSayr7o_QhoLg6-3lBfbMQdw",
     authDomain: "girls-vlc.firebaseapp.com",
     databaseURL: "https://girls-vlc-default-rtdb.firebaseio.com",
@@ -20,11 +21,83 @@
   };
  
 
- // Initialize Firebase11
+ // Initialize Firebase
  const app = firebase.initializeApp(firebaseConfig);
+ const analytics = firebase.analytics();
  var database = firebase.database();
  var storage = firebase.storage();
  var storageRef = storage.ref();
+ var provider = new firebase.auth.GoogleAuthProvider();
+ 
+ const signInWithGoogleButton = document.getElementById('signInWithGoogle');
+ const signOutWithGoogleButton = document.getElementById('singout');
+ 
+ var auth = firebase.auth(); 
+
+ 
+ const signInWithGoogle = () => {
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    GFX.displayButtonSalirGoogle(); 
+    auth.signInWithPopup(googleProvider)
+    .then(() => {
+        console.log("ENTRO Google acount");
+    //    window.location.assign('./index.html');
+    })
+    .catch(error => {
+      console.error(error);
+    })
+    
+  }
+
+
+  signInWithGoogleButton.addEventListener('click', signInWithGoogle);
+  const signup = () => {
+    firebase.auth().signInWithPopup(provider);
+  firebase.auth()
+  .getRedirectResult()
+  .then((result) => {
+    if (result.credential) {
+      /** @type {firebase.auth.OAuthCredential} */
+      var credential = result.credential;
+
+      // This gives you a Google Access Token. You can use it to access the Google API.
+      var token = credential.accessToken;
+      // ...
+    }
+    // The signed-in user info.
+    var user = result.user;
+    GFX.displayButtonSalirGoogle(); 
+  }).catch((error) => {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    // The email of the user's account used.
+    var email = error.email;
+    // The firebase.auth.AuthCredential type that was used.
+    var credential = error.credential;
+    // ...
+  });
+};
+//   firebase.auth().signOut().then(() => {
+//     // Sign-out successful.
+//   }).catch((error) => {
+//     // An error happened.
+//   });
+
+ function googlesingOut()
+ {
+    firebase.auth().signOut().then(() => {
+        // Sign-out successful.
+        console.log("SALIO Google acount")
+      }).catch((error) => {
+        // An error happened.
+      });
+    GFX.displayButtonRegisterGoogle(); 
+ }
+ signOutWithGoogleButton.addEventListener('click', googlesingOut);
+//BD
+
+
 function insertData(data, name){
     
     var ref = database.ref(name); 
@@ -45,7 +118,7 @@ function insertData(data, name){
     }
     var db = firebase.database();
 
-    db.ref("Eventos/"+k+"/"+campo).push(value);
+    db.ref("Eventos/"+k+"/"+campo).push(value +'/'+auth.currentUser.email);
         
 }
 //Delate Event
@@ -128,18 +201,41 @@ function delateEvenDB(event){
             var k = CORE.DicEvents[i].key; 
            
             var db = firebase.database();
-            // if(CORE.DicEvents[i].categoria =="SubirImagen")
-            // {
-            //     var imgRef = storageRef.child(CORE.DicEvents[i].image); 
-            //     var imgRef2= storage.ref().child('fotos/'+imagenUpload.name);
-            //     imgRef.delete().then(() => {
-            //         console.log("Borrado ok Image"); 
-            //       }).catch((error) => {
-            //         console.log("No borrada image"); 
-            //       });
-            // }
+            
             db.ref("Eventos/"+k ).remove();
            
+        }
+    }        
+}
+
+function editEvenDB( title, image, content,date, dateFin, hour, categoria, organizer){
+    var id = CORE.idEdit;  
+    
+    for(var i=0; i< CORE.DicEvents.length; i++){
+        if(CORE.DicEvents[i].id == id)
+        {
+            var k = CORE.DicEvents[i].key; 
+           
+            var db = firebase.database();
+            const updates = {};
+            updates[ `/id`] =  CORE.DicEvents[i].id;
+            updates[ `/key`] =  CORE.DicEvents[i].key;
+            updates[ `title`] =  title;
+            if(image=="")
+                updates[`image`] =  CORE.DicEvents[i].image;
+            else
+                updates[`image`] =  image;
+            updates[`content`] =  content;
+            updates[ `date`] =  date;
+            updates[ `dateFin`] =  dateFin;
+            updates[ `hour`] =  hour;
+            updates[ `categoria`] =  categoria;
+            updates[ `asistentes`] =  CORE.DicEvents[i].asistentes;
+            updates[ `organizer`] =  organizer;
+
+
+           firebase.database().ref("Eventos/"+k).update(updates);
+           CORE.idEdit =-1; 
         }
     }        
 }
@@ -177,6 +273,7 @@ function gotData(data)
                 var image =  scores[k].image; 
                 var categoria =  scores[k].categoria; 
                 var content =  scores[k].content;
+                var organizer =  scores[k].organizer;
                 var asistentes  = [];  
                 var asistenteskey = []; 
                 if(scores[k].asistentes){
@@ -185,7 +282,7 @@ function gotData(data)
                     asistenteskey= Object.keys(scores[k].asistentes); 
                    
                 }
-                GFX.createDivEventosDB(title, id, date,dateFin, hour, image, categoria, content, asistentes, key, asistenteskey); 
+                GFX.createDivEventosDB(title, id, date,dateFin, hour, image, categoria, content, asistentes, key, asistenteskey, organizer); 
             }
             LOGIC.ordenarEventDate(); 
             //LOGIC.cambiarIDIfRepite(); 
@@ -213,6 +310,32 @@ function gotData(data)
         }
         
     }
+    if(scores && data.key =="PassWord")
+    {
+        var keys = Object.keys(scores); 
+        if(CORE.initDBPass){ // Solo se carga una vez toda la db 
+            for (var i =0; i<keys.length; i++)
+            {
+                var k = keys[i]; 
+                var key =  k; 
+                CORE.paswordEliminar = LOGIC.encrypt_data(scores[k].pass); 
+            }
+            CORE.initDBPass = false; 
+        }
+    }
+    if(scores && data.key =="Admin")
+    {
+        var keys = Object.keys(scores); 
+        if(CORE.initDBAdmin){ // Solo se carga una vez toda la db 
+            for (var i =0; i<keys.length; i++)
+            {
+                var k = keys[i]; 
+                var key =  k; 
+                CORE.admins.push( LOGIC.encrypt_data(scores[k].admin)); 
+            }
+            CORE.initDBAdmin = false; 
+        }
+    }
 }
  function errData(err)
  {
@@ -221,7 +344,7 @@ function gotData(data)
 
  function UploadImage()
  {
-    var imagenUpload = document.querySelector("#imagenUpload").files[0];
+    var imagenUpload = document.querySelector(".imagenUpload").files[0];
     if(imagenUpload){
         LOGIC.saveImageUpload(imagenUpload); 
         CORE.imageokupload = false; 
@@ -267,37 +390,40 @@ function gotData(data)
 
  //Calendario 
  document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-    var today = new Date();
-    var dd = String(today.getDate()).padStart(2, '0');
-    var mm = String(today.getMonth() + 1).padStart(2, '0'); 
-    var yyyy = today.getFullYear();
+    if(document.title=="Girls Vlc"){
+        var calendarEl = document.getElementById('calendar');
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); 
+        var yyyy = today.getFullYear();
 
-    today = yyyy +'-'+ mm + '-' + dd;
-    calendarDiv = new FullCalendar.Calendar(calendarEl, {
-      initialDate: today,
-      initialView: 'dayGridMonth',
-    //   nowIndicator: true,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,listYear'
-      },
-      firstDay: 1,//  1(Monday) this can be changed to 0(Sunday) for the USA system
-      locales: 'es',
+        today = yyyy +'-'+ mm + '-' + dd;
+        calendarDiv = new FullCalendar.Calendar(calendarEl, {
+        initialDate: today,
+        initialView: 'dayGridMonth',
+        //   nowIndicator: true,
+        headerToolbar: {
+            left: 'prev,next',
+            center: 'title',
+            right: 'dayGridMonth,listYear'
+        },
+        firstDay: 1,//  1(Monday) this can be changed to 0(Sunday) for the USA system
+        locales: 'es',
+        eventColor: '#30C7B5',
+        contentHeight:"auto",
+        dateClick: function(info) {
+            
+            GFX.hiddenEvents(info.dateStr); 
+            $(".day-highlight").removeClass("day-highlight");
+            info.dayEl.classList.remove('fc-day-future')
+            info.dayEl.classList.add('day-highlight'); 
+        },
 
-      dateClick: function(info) {
-         
-        GFX.hiddenEvents(info.dateStr); 
-        $(".day-highlight").removeClass("day-highlight");
-        info.dayEl.classList.remove('fc-day-future')
-        info.dayEl.classList.add('day-highlight'); 
-      },
+        selectable: true,
+        });
 
-       selectable: true,
-    });
-
-    calendarDiv.render();
+        calendarDiv.render();
+    }
   });
   let menu = document.querySelector('.menu');
   let toggle = document.querySelector('.toggle');
